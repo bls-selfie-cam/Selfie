@@ -6,106 +6,24 @@
     <title>Selfie Camera</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow: hidden; font-family: Arial, sans-serif; }
-        #oz-container { width: 100vw; height: 100vh; max-width: 600px; }
-        #error-msg { color: #ff4444; text-align: center; padding: 20px; display: none; font-size: 16px; }
-        #loading { color: #fff; text-align: center; padding: 20px; }
-        .spinner { border: 3px solid #333; border-top: 3px solid #00ff88; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .success-msg { color: #00ff88; text-align: center; padding: 20px; font-size: 18px; display: none; }
+        body { background: #000; }
+        iframe { width: 100vw; height: 100vh; border: none; }
     </style>
 </head>
 <body>
-    <div id="loading">
-        <div class="spinner"></div>
-        <p>Loading camera...</p>
-    </div>
-    <div class="success-msg" id="success-msg">Verification complete! You can close this page.</div>
-    <div id="error-msg"></div>
-    <div id="oz-container"></div>
-
+    <iframe id="oz-frame" allow="camera; microphone"></iframe>
     <script>
         (function() {
             var params = new URLSearchParams(window.location.search);
             var sessionId = params.get('ses');
 
             if (!sessionId) {
-                showError('Missing session ID. Please check your link.');
+                document.body.innerHTML = '<p style="color:#ff4444;text-align:center;padding:20px;">Missing session ID.</p>';
                 return;
             }
 
-            var BASE = 'https://web-sdk.prod.cdn.spain.ozforensics.com/blsinternational/plugin';
-            var VER = '1.8.1-10';
-
-            function loadScript(src) {
-                return new Promise(function(resolve, reject) {
-                    var s = document.createElement('script');
-                    s.src = src;
-                    s.onload = resolve;
-                    s.onerror = reject;
-                    document.head.appendChild(s);
-                });
-            }
-
-            function loadCSS(src) {
-                return new Promise(function(resolve) {
-                    var l = document.createElement('link');
-                    l.rel = 'stylesheet';
-                    l.href = src;
-                    l.onload = resolve;
-                    document.head.appendChild(l);
-                });
-            }
-
-            function showError(msg) {
-                document.getElementById('loading').style.display = 'none';
-                var err = document.getElementById('error-msg');
-                err.textContent = msg;
-                err.style.display = 'block';
-            }
-
-            function showSuccess() {
-                document.getElementById('oz-container').style.display = 'none';
-                document.getElementById('success-msg').style.display = 'block';
-            }
-
-            async function init() {
-                try {
-                    await loadCSS(BASE + '/liveness-81ab90655a.css?ver=' + VER);
-                    await loadScript(BASE + '/vendor/podium.js?ver=' + VER);
-                    await loadScript(BASE + '/faceworker.js?ver=' + VER);
-                    await loadScript(BASE + '/ozliveness_core.js?ver=' + VER);
-                    await loadScript(BASE + '/ozliveness_main.js?ver=' + VER);
-
-                    document.getElementById('loading').style.display = 'none';
-
-                    var started = false;
-
-                    // Try all possible function names
-                    var attempts = [
-                        function() { OzLiveness.start({ sessionId: sessionId, container: document.getElementById('oz-container'), onComplete: showSuccess, onError: function(err) { showError('Camera error: ' + (err.message || 'Unknown error')); } }); },
-                        function() { ozLiveness.start({ sessionId: sessionId, container: document.getElementById('oz-container'), onComplete: showSuccess, onError: function(err) { showError('Camera error: ' + (err.message || 'Unknown error')); } }); },
-                        function() { window.ozLiveness.start({ sessionId: sessionId, container: document.getElementById('oz-container'), onComplete: showSuccess, onError: function(err) { showError('Camera error: ' + (err.message || 'Unknown error')); } }); },
-                        function() { Liveness.start({ sessionId: sessionId, container: document.getElementById('oz-container'), onComplete: showSuccess, onError: function(err) { showError('Camera error: ' + (err.message || 'Unknown error')); } }); }
-                    ];
-
-                    for (var i = 0; i < attempts.length; i++) {
-                        try {
-                            attempts[i]();
-                            started = true;
-                            break;
-                        } catch(e) {}
-                    }
-
-                    if (!started) {
-                        showError('Could not start camera. Please try a different link.');
-                    }
-                } catch(e) {
-                    showError('Failed to load: ' + e.message);
-                }
-            }
-
-            init();
+            var url = 'https://web-sdk.prod.cdn.spain.ozforensics.com/blsinternational/plugin_liveness.php?ses=' + encodeURIComponent(sessionId);
+            document.getElementById('oz-frame').src = url;
         })();
     </script>
 </body>
