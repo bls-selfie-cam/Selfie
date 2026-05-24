@@ -79,19 +79,26 @@
 
                     document.getElementById('loading').style.display = 'none';
 
-                    if (typeof OzLiveness !== 'undefined') {
-                        OzLiveness.start({
-                            sessionId: sessionId,
-                            container: document.getElementById('oz-container'),
-                            onComplete: function() {
-                                showSuccess();
-                            },
-                            onError: function(err) {
-                                showError('Camera error: ' + (err.message || 'Unknown error'));
-                            }
-                        });
-                    } else {
-                        showError('Failed to load camera module. Please try again.');
+                    var started = false;
+
+                    // Try all possible function names
+                    var attempts = [
+                        function() { OzLiveness.start({ sessionId: sessionId, container: document.getElementById('oz-container'), onComplete: showSuccess, onError: function(err) { showError('Camera error: ' + (err.message || 'Unknown error')); } }); },
+                        function() { ozLiveness.start({ sessionId: sessionId, container: document.getElementById('oz-container'), onComplete: showSuccess, onError: function(err) { showError('Camera error: ' + (err.message || 'Unknown error')); } }); },
+                        function() { window.ozLiveness.start({ sessionId: sessionId, container: document.getElementById('oz-container'), onComplete: showSuccess, onError: function(err) { showError('Camera error: ' + (err.message || 'Unknown error')); } }); },
+                        function() { Liveness.start({ sessionId: sessionId, container: document.getElementById('oz-container'), onComplete: showSuccess, onError: function(err) { showError('Camera error: ' + (err.message || 'Unknown error')); } }); }
+                    ];
+
+                    for (var i = 0; i < attempts.length; i++) {
+                        try {
+                            attempts[i]();
+                            started = true;
+                            break;
+                        } catch(e) {}
+                    }
+
+                    if (!started) {
+                        showError('Could not start camera. Please try a different link.');
                     }
                 } catch(e) {
                     showError('Failed to load: ' + e.message);
