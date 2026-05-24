@@ -8,22 +8,51 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #000; }
         iframe { width: 100vw; height: 100vh; border: none; }
+        #error-msg { color: #ff4444; text-align: center; padding: 20px; font-size: 16px; display: none; font-family: Arial, sans-serif; }
     </style>
 </head>
 <body>
+    <div id="error-msg"></div>
     <iframe id="oz-frame" allow="camera; microphone"></iframe>
+
     <script>
         (function() {
             var params = new URLSearchParams(window.location.search);
             var sessionId = params.get('ses');
+            var data = params.get('data');
 
-            if (!sessionId) {
-                document.body.innerHTML = '<p style="color:#ff4444;text-align:center;padding:20px;">Missing session ID.</p>';
+            if (!sessionId || !data) {
+                showError('Missing session ID or data. Please check your link.');
                 return;
             }
 
-            var url = 'https://web-sdk.prod.cdn.spain.ozforensics.com/blsinternational/plugin_liveness.php?ses=' + encodeURIComponent(sessionId);
-            document.getElementById('oz-frame').src = url;
+            function showError(msg) {
+                document.getElementById('oz-frame').style.display = 'none';
+                var err = document.getElementById('error-msg');
+                err.textContent = msg;
+                err.style.display = 'block';
+            }
+
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = 'https://web-sdk.prod.cdn.spain.ozforensics.com/blsinternational/plugin_liveness.php';
+            form.target = 'oz-frame';
+            form.style.display = 'none';
+
+            var sesInput = document.createElement('input');
+            sesInput.type = 'hidden';
+            sesInput.name = 'ses';
+            sesInput.value = sessionId;
+            form.appendChild(sesInput);
+
+            var dataInput = document.createElement('input');
+            dataInput.type = 'hidden';
+            dataInput.name = 'data';
+            dataInput.value = data;
+            form.appendChild(dataInput);
+
+            document.body.appendChild(form);
+            form.submit();
         })();
     </script>
 </body>
